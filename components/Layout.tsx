@@ -81,9 +81,7 @@ export default function Layout({ children }: { children: ReactNode }): JSX.Eleme
             (typeof chainId === 'number'
               ? chainId !== ChainId.MAINNET
               : typeof requiredChainId === 'number' && requiredChainId !== ChainId.MAINNET) ? null : (
-              <Box>
-                <WalletConnect />
-              </Box>
+              <Box>{/* <WalletConnect /> */}</Box> /** @note Now handled by Web3React Connectors */
             )
           ) : (
             [firstToken, secondToken]
