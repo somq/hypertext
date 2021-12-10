@@ -1,18 +1,19 @@
-import { useState, useEffect, Suspense, useRef, useLayoutEffect } from 'react'
+import { useState, useEffect, Suspense, useRef, useLayoutEffect, ComponentType } from 'react'
 import { Button, Stack, Box, IconButton } from '@chakra-ui/core'
 import { Web3Provider } from '@ethersproject/providers'
 import { useWeb3React } from '@web3-react/core'
-import { UserRejectedRequestError } from '@web3-react/injected-connector'
 import MetaMaskOnboarding from '@metamask/onboarding'
 import { TokenAmount } from '@uniswap/sdk'
 
 import { formatEtherscanLink, EtherscanType, shortenHex } from '../utils'
-import { injected, getNetwork } from '../connectors'
+import { getNetwork, connectors } from '../connectors'
 import { useETHBalance } from '../data'
 import ErrorBoundary from './ErrorBoundary'
 import { useQueryParameters, useUSDETHPrice } from '../hooks'
 import { QueryParameters } from '../constants'
 import { useShowUSD } from '../context'
+import { WalletConnectConnector } from '@web3-react/walletconnect-connector'
+import { Icons } from '@chakra-ui/core/dist/theme/icons'
 
 function ETHBalance(): JSX.Element {
   const { account } = useWeb3React()
@@ -40,7 +41,7 @@ function ETHBalance(): JSX.Element {
 }
 
 export default function Account({ triedToEagerConnect }: { triedToEagerConnect: boolean }): JSX.Element | null {
-  const { active, error, activate, library, chainId, account, setError } = useWeb3React<Web3Provider>()
+  const { active, error, activate, library, chainId, account, setError, deactivate } = useWeb3React<Web3Provider>()
 
   // initialize metamask onboarding
   const onboarding = useRef<MetaMaskOnboarding>()
@@ -59,6 +60,63 @@ export default function Account({ triedToEagerConnect }: { triedToEagerConnect: 
 
   // manage connecting state for injected connector
   const [connecting, setConnecting] = useState(false)
+
+  function createConnectHandler(connectorId: string) {
+    return async () => {
+      setConnecting(true)
+      try {
+        const connector = connectors[connectorId]
+
+        // Taken from https://github.com/NoahZinsmeister/web3-react/issues/124#issuecomment-817631654
+        if (connector instanceof WalletConnectConnector && connector.walletConnectProvider?.wc?.uri) {
+          connector.walletConnectProvider = undefined
+        }
+
+        await activate(connector)
+      } catch (error) {
+        console.error(error)
+      }
+      setConnecting(false)
+    }
+  }
+
+  // @todo implement
+  async function handleDisconnect() {
+    try {
+      deactivate()
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
+  function getConnectorDetails(
+    connector: string | 'injected' | 'walletconnect' | 'uauth'
+  ): { name: string; icon: Icons | ComponentType<Record<string, unknown>> | undefined } {
+    switch (connector) {
+      case 'injected':
+        return {
+          name: 'Metamask',
+          icon: 'metamask' as 'edit',
+        }
+      case 'walletconnect':
+        return {
+          name: 'WalletConnect',
+          icon: 'walletconnect' as 'edit',
+        }
+      case 'uauth':
+        return {
+          name: 'Unstoppable Domains',
+          icon: 'unstoppabledomains' as 'edit',
+        }
+
+      default:
+        return {
+          name: 'Metamask',
+          icon: 'metamask' as 'edit',
+        }
+    }
+  }
+
   useEffect(() => {
     if (active || error) {
       setConnecting(false)
@@ -92,29 +150,20 @@ export default function Account({ triedToEagerConnect }: { triedToEagerConnect: 
   } else if (typeof account !== 'string') {
     return (
       <Box>
-        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-        {MetaMaskOnboarding.isMetaMaskInstalled() || (window as any)?.ethereum || (window as any)?.web3 ? (
-          <Button
-            isLoading={connecting}
-            leftIcon={MetaMaskOnboarding.isMetaMaskInstalled() ? ('metamask' as 'edit') : undefined}
-            onClick={(): void => {
-              setConnecting(true)
-              activate(injected, undefined, true).catch((error) => {
-                // ignore the error if it's a user rejected request
-                if (error instanceof UserRejectedRequestError) {
-                  setConnecting(false)
-                } else {
-                  setError(error)
-                }
-              })
-            }}
-          >
-            {MetaMaskOnboarding.isMetaMaskInstalled() ? 'Connect to MetaMask' : 'Connect to Wallet'}
-          </Button>
+        {!connecting ? (
+          <>
+            {Object.keys(connectors).map((v, i) => (
+              <Box key={v} mt={i === 0 ? 0 : 2}>
+                <Button leftIcon={getConnectorDetails(v).icon} key={v} onClick={createConnectHandler(v)}>
+                  Login with {getConnectorDetails(v).name}
+                </Button>
+              </Box>
+            ))}
+          </>
         ) : (
-          <Button leftIcon={'metamask' as 'edit'} onClick={() => onboarding.current?.startOnboarding()}>
-            Install Metamask
-          </Button>
+          <Box>
+            <Button isLoading={connecting}>Connecting...</Button>
+          </Box>
         )}
       </Box>
     )
