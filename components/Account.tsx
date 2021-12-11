@@ -81,12 +81,13 @@ export default function Account({ triedToEagerConnect }: { triedToEagerConnect: 
   }
 
   // @todo implement
-  async function handleDisconnect() {
+  function handleDisconnect() {
     try {
       deactivate()
     } catch (error) {
       console.error(error)
     }
+    setConnecting(false)
   }
 
   function getConnectorDetails(
@@ -150,7 +151,7 @@ export default function Account({ triedToEagerConnect }: { triedToEagerConnect: 
   } else if (typeof account !== 'string') {
     return (
       <Box>
-        {!connecting ? (
+        {
           <>
             {Object.keys(connectors).map((v, i) => (
               <Box key={v} mt={i === 0 ? 0 : 2}>
@@ -160,11 +161,7 @@ export default function Account({ triedToEagerConnect }: { triedToEagerConnect: 
               </Box>
             ))}
           </>
-        ) : (
-          <Box>
-            <Button isLoading={connecting}>Connecting...</Button>
-          </Box>
-        )}
+        }
       </Box>
     )
   }
