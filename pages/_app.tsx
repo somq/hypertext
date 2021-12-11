@@ -31,6 +31,7 @@ function FunctionalApp({ Component }: { Component: NextComponentType }): JSX.Ele
   const { error, chainId } = useWeb3React()
   const queryParameters = useQueryParameters()
   const requiredChainId = queryParameters[QueryParameters.CHAIN]
+  console.log(`FunctionalApp / error, chainId`, error, chainId)
 
   return !painted ? null : (
     <ColorModeProvider>
