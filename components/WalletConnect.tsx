@@ -6,6 +6,10 @@ import { useEffect, useState } from 'react'
 import { walletconnect } from '../connectors'
 import { UserRejectedRequestError } from '@web3-react/walletconnect-connector'
 
+/**
+ * @note This component is not used anymore because connectors
+ * are now handled dynamically by Web3React Connectors
+ */
 export default function WalletConnect(): JSX.Element | null {
   const { active, error, activate, setError } = useWeb3React<Web3Provider>()
 
