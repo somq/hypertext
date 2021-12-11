@@ -4,10 +4,8 @@ import { WalletConnectConnector } from '@web3-react/walletconnect-connector'
 
 import { INFURA_PREFIXES } from './utils'
 
-
 import { UAuthConnector } from '@uauth/web3-react'
 import type { AbstractConnector } from '@web3-react/abstract-connector'
-
 
 export function getNetwork(defaultChainId = 1): NetworkConnector {
   return new NetworkConnector({
@@ -35,8 +33,8 @@ export const walletconnect = new WalletConnectConnector({
 export const uauth = new UAuthConnector({
   clientID: process.env.UAUTH_CLIENTID,
   clientSecret: process.env.UAUTH_CLIENTSECRET,
-  redirectUri: 'https://posther.netlify.app/callback',
-  postLogoutRedirectUri: 'https://posther.netlify.app/callback',
+  redirectUri: process.env.UAUTH_REDIRECT_URI,
+  postLogoutRedirectUri: process.env.UAUTH_POSTREDIRECT_URI,
 
   scope: 'openid wallet',
 
