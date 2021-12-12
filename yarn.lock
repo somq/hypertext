@@ -2572,7 +2572,7 @@
     "@emotion/css" "^11.5.0"
     "@uauth/abstract-ui" "^0.7.0"
 
-"@uauth/js@^0.7.5":
+"@uauth/js@^0.7.5", "@uauth/js@~0.7.5":
   version "0.7.5"
   resolved "https://registry.yarnpkg.com/@uauth/js/-/js-0.7.5.tgz#06e3e4ef45769c56bb4104f2e136b419ec8d28ef"
   integrity sha512-iJymaNkWHTsHW3H2waoXDN8uShQqPSe16JjzrLDuiE8ttYEFlZb40oL9bMM3Amms8K+porJk4aVH/ZvOD0d60Q==

@@ -14,6 +14,13 @@ import { QueryParameters } from '../constants'
 import { useShowUSD } from '../context'
 import { WalletConnectConnector } from '@web3-react/walletconnect-connector'
 import { Icons } from '@chakra-ui/core/dist/theme/icons'
+import UAuth from '@uauth/js'
+const uauth = new UAuth({
+  clientID: 'Fn+l56Y+1F/lJby1/AzuJ6i96eYjEpNgCEQlTz9H5wA=',
+  clientSecret: '7fXXOeHQCsMzFb6MALs7b6NP66AfvFzg3/nEr4jNAPE=',
+  // redirectUri: 'http://localhost:3000/callback',
+  redirectUri: 'https://hypertext-lwu.netlify.app/callback',
+})
 
 function ETHBalance(): JSX.Element {
   const { account } = useWeb3React()
@@ -44,6 +51,11 @@ export default function Account({ triedToEagerConnect }: { triedToEagerConnect: 
   const { active, error, activate, library, chainId, account, setError, deactivate } = useWeb3React<Web3Provider>()
   console.log(`Account / active, error, library, chainId, account`, active, error, library, chainId, account)
 
+  let _error = error
+  if (error?.name === 'PopupClosedError') {
+    _error = undefined
+  }
+
   // initialize metamask onboarding
   const onboarding = useRef<MetaMaskOnboarding>()
   useLayoutEffect(() => {
@@ -54,30 +66,51 @@ export default function Account({ triedToEagerConnect }: { triedToEagerConnect: 
   const queryParameters = useQueryParameters()
   const requiredChainId = queryParameters[QueryParameters.CHAIN]
   useEffect(() => {
-    if (triedToEagerConnect && !active && !error) {
+    if (triedToEagerConnect && !active && !_error) {
       activate(getNetwork(requiredChainId))
     }
-  }, [triedToEagerConnect, active, error, requiredChainId, activate])
+  }, [triedToEagerConnect, active, _error, requiredChainId, activate])
 
   // manage connecting state for injected connector
   const [connecting, setConnecting] = useState(false)
 
   function createConnectHandler(connectorId: string) {
+
     return async () => {
       setConnecting(true)
       try {
         const connector = connectors[connectorId]
+        console.log(`return / connector`, connector)
 
         // Taken from https://github.com/NoahZinsmeister/web3-react/issues/124#issuecomment-817631654
         if (connector instanceof WalletConnectConnector && connector.walletConnectProvider?.wc?.uri) {
           connector.walletConnectProvider = undefined
         }
 
-        await activate(connector)
+        const res = await activate(connector)
+
+        try {
+          console.log(`return / connector`, await connector.getAccount())
+          console.log(`return / connector`, await connector.getProvider())
+        } catch (error) {
+          console.log(`return / error`, error)
+        }
+
+        console.log(`return / res`, res)
       } catch (error) {
         console.error(error)
       }
       setConnecting(false)
+    }
+  }
+
+  async function rawLogin() {
+    console.log(`createConnectHandler / createConnectHandler`)
+    try {
+      const authorization = await uauth.loginWithPopup()
+      console.log(`createConnectHandler / authorization`, authorization)
+    } catch (error) {
+      console.log(`createConnectHandler / error`, error)
     }
   }
 
@@ -120,11 +153,11 @@ export default function Account({ triedToEagerConnect }: { triedToEagerConnect: 
   }
 
   useEffect(() => {
-    if (active || error) {
+    if (active || _error) {
       setConnecting(false)
       onboarding.current?.stopOnboarding()
     }
-  }, [active, error])
+  }, [active, _error])
 
   const [ENSName, setENSName] = useState<string>('')
   useEffect(() => {
@@ -145,7 +178,7 @@ export default function Account({ triedToEagerConnect }: { triedToEagerConnect: 
     }
   }, [library, account, chainId])
 
-  if (error) {
+  if (_error) {
     return null
   } else if (!triedToEagerConnect) {
     return null
@@ -156,7 +189,8 @@ export default function Account({ triedToEagerConnect }: { triedToEagerConnect: 
           <>
             {Object.keys(connectors).map((v, i) => (
               <Box key={v} mt={i === 0 ? 0 : 2}>
-                <Button leftIcon={getConnectorDetails(v).icon} key={v} onClick={createConnectHandler(v)}>
+                {/* <Button leftIcon={getConnectorDetails(v).icon} key={v} onClick={createConnectHandler(v)}> */}
+                <Button leftIcon={getConnectorDetails(v).icon} key={v} onClick={() => rawLogin()}>
                   Login with {getConnectorDetails(v).name}
                 </Button>
               </Box>
