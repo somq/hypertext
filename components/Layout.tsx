@@ -7,14 +7,14 @@ import { CHAIN_ID_NAMES } from '../utils'
 import { useEagerConnect, useQueryParameters, useUSDETHPrice } from '../hooks'
 import { useTransactions, useFirstToken, useSecondToken, useShowUSD } from '../context'
 import ColorBox from './ColorBox'
-import Account from './Account'
 import { TransactionToast } from './TransactionToast'
 import TokenBalance from './TokenBalance'
 import { WETH, ChainId, Token } from '@uniswap/sdk'
 import WalletConnect from './WalletConnect'
 import { QueryParameters } from '../constants'
 
-const Settings = dynamic(() => import('./Settings'))
+const Settings = dynamic(() => import('./Settings'), { ssr: false })
+const Account = dynamic(() => import('./Account'), { ssr: false })
 
 export default function Layout({ children }: { children: ReactNode }): JSX.Element {
   const { chainId, account } = useWeb3React()
